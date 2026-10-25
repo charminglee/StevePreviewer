@@ -1,12 +1,14 @@
-# Modeling based on Steve
+# StevePreviewer
 
 用于 **Blockbench 桌面版 5.2.2 及以上版本**的原版 Steve 开发预览插件，仅在 **Bedrock Entity / 基岩版实体模型**格式中启用。接口按 5.2.2 源码核对，更新版本的实际兼容性仍需宿主验证。
 
 ## 安装
 
 1. 在 Blockbench 的“文件 → 插件”中选择“从文件加载插件”。
-2. 选择 [`dist/modeling_based_on_steve.js`](dist/modeling_based_on_steve.js)。
+2. 选择 [`dist/steve_previewer.js`](dist/steve_previewer.js)。
 3. 打开基岩版实体工程，在建模或动画页面的上方工具栏点击人形图标“预览 Steve 模型”。
+
+如已安装旧名称插件，请先卸载旧插件，再加载新文件。
 
 交付的 JS 内已包含模型数据和 PNG 贴图，不需要联网，也不需要将 `assets/` 复制到 Blockbench。`src/` 中的是构建模板，安装时请选择 `dist/` 中的文件。
 
@@ -24,7 +26,7 @@
 
 ## 保存与导出
 
-**保存 `.bbmodel`** 会保留正在预览的节点、动画及关闭状态下的 Steve 暂存数据。插件将暂存状态放在宿主原生 `unhandled_root_fields.modeling_based_on_steve` 字段中，避免仅靠内存保存。重新打开工程后仍需加载本插件以恢复独立皮肤及预览标记。
+**保存 `.bbmodel`** 会保留正在预览的节点、动画及关闭状态下的 Steve 暂存数据。插件将暂存状态放在宿主原生 `unhandled_root_fields.modeling_based_on_steve` 字段中，避免仅靠内存保存；改名后继续沿用此字段以兼容已有工程。重新打开工程后仍需加载本插件以恢复独立皮肤及预览标记。
 
 **导出基岩版 `.geo.json`** 不包含 Steve 的 12 个预览方块，也不包含仅供预览的空骨骼。集合单独导出时，插件也会在原生编译前暂时排除 Steve 块，编译后恢复对象标志。若自己的模型挂在 Steve 骨骼下，插件保留这些内容所必需的父骨骼，保证层级和动画关系。插件不会打包或导出 Steve 贴图。
 
@@ -38,12 +40,12 @@
 
 | 路径 | 用途 |
 | --- | --- |
-| `src/modeling_based_on_steve.js` | 插件逻辑及内置资源占位符 |
+| `src/steve_previewer.js` | 插件逻辑及内置资源占位符 |
 | `assets/steve.geo.json` | Mojang 原始玩家几何与骨架 |
 | `assets/steve.png` | Mojang 原始 Steve 皮肤 |
 | `assets/Mojang-LICENSE.md` | 原资源附带的使用条款 |
 | `build.ps1` | 将几何和 PNG 内嵌到单文件插件 |
-| `dist/modeling_based_on_steve.js` | 可加载的插件交付文件 |
+| `dist/steve_previewer.js` | 可加载的插件交付文件 |
 
 在此目录使用 PowerShell 7 构建：
 

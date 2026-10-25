@@ -5,7 +5,9 @@
 (() => {
     "use strict";
 
-    const ID = "modeling_based_on_steve";
+    const ID = "steve_previewer";
+    // 沿用已保存工程和撤销记录中的状态键，改名后仍能识别原预览数据
+    const STATE_KEY = "modeling_based_on_steve";
     const STEVE = /* @embedded-steve-geometry */ null;
     const SKIN = /* @embedded-steve-texture */ "";
     const listeners = [];
@@ -19,7 +21,7 @@
 
     const clone = value => JSON.parse(JSON.stringify(value));
     const supported = () => Project && Format.id === "bedrock";
-    const state = () => Project.unhandled_root_fields[ID] || {};
+    const state = () => Project.unhandled_root_fields[STATE_KEY] || {};
     const activeGroups = () => (state().groups || [])
         .map(uuid => OutlinerNode.uuids[uuid]).filter(node => node instanceof Group);
     const activeCubes = () => (state().cubes || [])
@@ -112,7 +114,7 @@
         const aspects = {
             elements: Outliner.elements.slice(), groups: Group.all.slice(),
             outliner: true, animations: Animation.all.slice(), selection: true,
-            modeling_based_on_steve: true
+            [STATE_KEY]: true
         };
         Undo.initEdit(aspects);
         try {
@@ -210,7 +212,7 @@
                 ids.cubes.push(cube.uuid);
             });
         });
-        Project.unhandled_root_fields[ID] = ids;
+        Project.unhandled_root_fields[STATE_KEY] = ids;
     }
 
     function restoreSteve(cache, prefix) {
@@ -226,7 +228,7 @@
             const parent = OutlinerNode.uuids[cache.parents[data.uuid]];
             OutlinerNode.uuids[data.uuid].addTo(parent instanceof Group ? parent : "root");
         });
-        Project.unhandled_root_fields[ID] = {
+        Project.unhandled_root_fields[STATE_KEY] = {
             groups: cache.groups.map(data => data.uuid), cubes: cache.cubes.map(data => data.uuid)
         };
         // UUID 不变即可重新接上暂存前的动画；同步名称供关闭状态下的导出使用
@@ -280,7 +282,7 @@
                 if (Outliner.elements.includes(cube)) cube.remove();
             });
             tracks.forEach(({animation, uuid, animator}) => { animation.animators[uuid] = animator; });
-            Project.unhandled_root_fields[ID] = {cache};
+            Project.unhandled_root_fields[STATE_KEY] = {cache};
         });
     }
 
@@ -361,13 +363,13 @@
     }
 
     Plugin.register(ID, {
-        title: "Modeling based on Steve", author: "12797", version: "1.0.0",
+        title: "StevePreviewer", author: "12797", version: "1.0.0",
         description: "基岩版实体建模与动画使用的原版 Steve 开发预览，独立贴图，几何不导出。",
         icon: "accessibility_new", variant: "desktop", min_version: "5.2.2",
         tags: ["Minecraft: Bedrock Edition", "Utility"],
         onload() {
             action = new Action(ID, {
-                name: "预览 Steve 模型", description: "Modeling based on Steve — 开关原版 Steve 开发预览",
+                name: "预览 Steve 模型", description: "StevePreviewer — 开关原版 Steve 开发预览",
                 icon: "accessibility_new", category: "view",
                 condition: () => supported() && ["edit", "animate"].includes(Modes.selected.id),
                 click: togglePreview
@@ -396,10 +398,10 @@
                 activeGroups().concat(activeCubes()).forEach(node => { node.export = false; });
             });
             listen(Blockbench, "create_undo_save", ({save, aspects}) => {
-                if (supported() && aspects.modeling_based_on_steve) save[ID] = clone(state());
+                if (supported() && aspects[STATE_KEY]) save[STATE_KEY] = clone(state());
             });
             listen(Blockbench, "load_undo_save", ({save}) => {
-                if (supported() && save[ID]) Project.unhandled_root_fields[ID] = clone(save[ID]);
+                if (supported() && save[STATE_KEY]) Project.unhandled_root_fields[STATE_KEY] = clone(save[STATE_KEY]);
             });
             refresh();
         },
@@ -414,7 +416,7 @@
             document.querySelectorAll(".outliner_object.mbs_preview").forEach(node => node.classList.remove("mbs_preview"));
             // 项目中的预览节点和暂存资料保留为原生数据，卸载不会丢失用户动画
             ModelProject.all.forEach(project => {
-                const data = project.unhandled_root_fields[ID];
+                const data = project.unhandled_root_fields[STATE_KEY];
                 if (!data) return;
                 project.elements.forEach(element => {
                     Object.values(element.faces || {}).forEach(face => {

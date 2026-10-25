@@ -5,7 +5,9 @@
 (() => {
     "use strict";
 
-    const ID = "modeling_based_on_steve";
+    const ID = "steve_previewer";
+    // 沿用已保存工程和撤销记录中的状态键，改名后仍能识别原预览数据
+    const STATE_KEY = "modeling_based_on_steve";
     const STEVE = {"description":{"identifier":"geometry.humanoid.custom","visible_bounds_width":1,"visible_bounds_height":2,"visible_bounds_offset":[0,1,0]},"bones":[{"name":"root","pivot":[0.0,0.0,0.0]},{"name":"body","parent":"waist","pivot":[0.0,24.0,0.0],"cubes":[{"origin":[-4.0,12.0,-2.0],"size":[8,12,4],"uv":[16,16]}]},{"name":"waist","parent":"root","pivot":[0.0,12.0,0.0]},{"name":"head","parent":"body","pivot":[0.0,24.0,0.0],"cubes":[{"origin":[-4.0,24.0,-4.0],"size":[8,8,8],"uv":[0,0]}]},{"name":"cape","pivot":[0.0,24,3.0],"parent":"body"},{"name":"hat","parent":"head","pivot":[0.0,24.0,0.0],"cubes":[{"origin":[-4.0,24.0,-4.0],"size":[8,8,8],"uv":[32,0],"inflate":0.5}]},{"name":"leftArm","parent":"body","pivot":[5.0,22.0,0.0],"cubes":[{"origin":[4.0,12.0,-2.0],"size":[4,12,4],"uv":[32,48]}]},{"name":"leftSleeve","parent":"leftArm","pivot":[5.0,22.0,0.0],"cubes":[{"origin":[4.0,12.0,-2.0],"size":[4,12,4],"uv":[48,48],"inflate":0.25}]},{"name":"leftItem","pivot":[6.0,15.0,1.0],"parent":"leftArm"},{"name":"rightArm","parent":"body","pivot":[-5.0,22.0,0.0],"cubes":[{"origin":[-8.0,12.0,-2.0],"size":[4,12,4],"uv":[40,16]}]},{"name":"rightSleeve","parent":"rightArm","pivot":[-5.0,22.0,0.0],"cubes":[{"origin":[-8.0,12.0,-2.0],"size":[4,12,4],"uv":[40,32],"inflate":0.25}]},{"name":"rightItem","pivot":[-6,15,1],"locators":{"lead_hold":[-6,15,1]},"parent":"rightArm"},{"name":"leftLeg","parent":"root","pivot":[1.9,12.0,0.0],"cubes":[{"origin":[-0.1,0.0,-2.0],"size":[4,12,4],"uv":[16,48]}]},{"name":"leftPants","parent":"leftLeg","pivot":[1.9,12.0,0.0],"cubes":[{"origin":[-0.1,0.0,-2.0],"size":[4,12,4],"uv":[0,48],"inflate":0.25}]},{"name":"rightLeg","parent":"root","pivot":[-1.9,12.0,0.0],"cubes":[{"origin":[-3.9,0.0,-2.0],"size":[4,12,4],"uv":[0,16]}]},{"name":"rightPants","parent":"rightLeg","pivot":[-1.9,12.0,0.0],"cubes":[{"origin":[-3.9,0.0,-2.0],"size":[4,12,4],"uv":[0,32],"inflate":0.25}]},{"name":"jacket","parent":"body","pivot":[0.0,24.0,0.0],"cubes":[{"origin":[-4.0,12.0,-2.0],"size":[8,12,4],"uv":[16,32],"inflate":0.25}]}]};
     const SKIN = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAUNSURBVHja7ZrbSxRRHMf3sbQsoyi0+5ZtWmyWPWiUld2MKDKKyjCxKPOCsHSBIrILlQXVk1BYQRBIFD10ewh77Mn/6dd8z+xv+s3hnBn3os6uc+DLHM/8ztn5fs5lz3omkQhJ9asWErRhxTySeWjN4kq6cTgdqESpJzacXrNISQKAYLJv7zZ6fKrJu0JlBYDN19VUWAEkk0mfUFYWALj39WnAZWUPQJrFCIDkdJgTAEzmwwB0pOrKBwAb37xygcpj9dcBmFQ2ANi4FI+Mkv8aTNVWEARTm2orldntycW0da2r9NqF1LDaXQdSKyvVQohYlAEAx6EO6qIN3Od2w/YRkQIAbVldpYzA4I4N1erKwt/765dQa/0yFQcgHIM6KON2JICgfcSsA1APvcLtNde4Y6wWPV3hgfg5MkATLzL0d3SYJp5nnPx1+nzzPDVtXKJiEIs6DVl4CoLTJtoO20dEYwTUOEN5VZXbq7XuVEA+vb6aPt29Qt8fDarrl+FBGstcoN8jGRq7dkwJMYhFHdRFHm2hTfwdto+IzBRwp8ECSi6fT0/OttDYpYPUklqqzCN17B6hH3euKvPIIwEKYhCLOqiLNmSbYfuI6ABweswdttX0qKORRi/uo6fnmx1zh+jbnR769SDjfb39eTpAH/oO07Cz50cMYlEHddEG975cBG37iEisAXhQDNuetjS97TtBby4d8H7QvOpqcwzupVv7d/r0smsP3T/VrGIQizqoizbUFMhOh7B9xKwD4F9vbHrs6hHVo8/O7aLrR9I0dHALDbbVK7PQ7eM76OHpXUrIIwax73vbVd03l4+612x7DFLfRzC4yO0LzrRPklQqlfIptIHJSfumyLmX6O4OVlgaH3fbgZw8puTJxo3eNRIAbFvjogBg81nNbQDOCJDm1WfMtSlQMIBtqQxBdes61fVQy0ef5D39fkvjCCXu3fuvzk5KvH5NiXfv1IKJr0pePFGmJOMhlMEU6+tXV/y3LZ5j9PtcnzUVADCYDwBIfWhvryvk+cGzEDzz/EAyHpKmpbgdGcsGuQ4D1e/nA8BmMBSA6QH5IfGAGBHSpIyHTOZlGybAMmbWAWDY8wMgLz+cAcgyWzzHwaDM6wblaJqpESBjMO+lPCMsPLw0zXkul7EMQDct6mNTxnribL7w+0MKZTJGv58XADYnR4AVgDQDGBKAyZgExlPAVCc71E0ARoc6PYNcXlQAOa8BOgDZ+3LFlgDkGqCZlkCkOR0AriYAqjwbM+WvwbwB6HMwDID+LWCKtQDQe1gHYJoiRQEQdD9wEdK/AXQApkVLkzRnAxC0RoQCaG1tJSgMAMf19/f75BnijQj3nt77NgAy3rAeSHOmOS4ByCnA1ykDsBkMuy+nCK46QG/HKADoGy9vQeVp4ogXYRsANmkaIbMGwDSCfBAcY6FbaydGluk97FsAHZnWiJwAxClOcYpTnOIUpzjFKU5xilOc4hSnOBWaCj5cLfbhZ8kB0M7/5x4AOQKm4wWIUpsCkQeQ6/sF/N9e37mClPxXuul9glwPP6MCwHbfevrLIGwnSaUEIOh+4EmR6Xi87AEU+/x/JgAU8n7BtJ//zxQA01FXLgDCjr4iDaCQKaADkMdaOgD5fsCUz/+jAsA2RfTDTfn2h376m9fx90wByPf9An2ImwAU9ALEdKdC3y8wne/bAJimSGQA5Hu8burhoJegyhKAbyEUC5z+Csx0APgH+QeX11rs170AAAAASUVORK5CYII=";
     const listeners = [];
@@ -19,7 +21,7 @@
 
     const clone = value => JSON.parse(JSON.stringify(value));
     const supported = () => Project && Format.id === "bedrock";
-    const state = () => Project.unhandled_root_fields[ID] || {};
+    const state = () => Project.unhandled_root_fields[STATE_KEY] || {};
     const activeGroups = () => (state().groups || [])
         .map(uuid => OutlinerNode.uuids[uuid]).filter(node => node instanceof Group);
     const activeCubes = () => (state().cubes || [])
@@ -112,7 +114,7 @@
         const aspects = {
             elements: Outliner.elements.slice(), groups: Group.all.slice(),
             outliner: true, animations: Animation.all.slice(), selection: true,
-            modeling_based_on_steve: true
+            [STATE_KEY]: true
         };
         Undo.initEdit(aspects);
         try {
@@ -210,7 +212,7 @@
                 ids.cubes.push(cube.uuid);
             });
         });
-        Project.unhandled_root_fields[ID] = ids;
+        Project.unhandled_root_fields[STATE_KEY] = ids;
     }
 
     function restoreSteve(cache, prefix) {
@@ -226,7 +228,7 @@
             const parent = OutlinerNode.uuids[cache.parents[data.uuid]];
             OutlinerNode.uuids[data.uuid].addTo(parent instanceof Group ? parent : "root");
         });
-        Project.unhandled_root_fields[ID] = {
+        Project.unhandled_root_fields[STATE_KEY] = {
             groups: cache.groups.map(data => data.uuid), cubes: cache.cubes.map(data => data.uuid)
         };
         // UUID 不变即可重新接上暂存前的动画；同步名称供关闭状态下的导出使用
@@ -280,7 +282,7 @@
                 if (Outliner.elements.includes(cube)) cube.remove();
             });
             tracks.forEach(({animation, uuid, animator}) => { animation.animators[uuid] = animator; });
-            Project.unhandled_root_fields[ID] = {cache};
+            Project.unhandled_root_fields[STATE_KEY] = {cache};
         });
     }
 
@@ -361,13 +363,13 @@
     }
 
     Plugin.register(ID, {
-        title: "Modeling based on Steve", author: "12797", version: "1.0.0",
+        title: "StevePreviewer", author: "12797", version: "1.0.0",
         description: "基岩版实体建模与动画使用的原版 Steve 开发预览，独立贴图，几何不导出。",
         icon: "accessibility_new", variant: "desktop", min_version: "5.2.2",
         tags: ["Minecraft: Bedrock Edition", "Utility"],
         onload() {
             action = new Action(ID, {
-                name: "预览 Steve 模型", description: "Modeling based on Steve — 开关原版 Steve 开发预览",
+                name: "预览 Steve 模型", description: "StevePreviewer — 开关原版 Steve 开发预览",
                 icon: "accessibility_new", category: "view",
                 condition: () => supported() && ["edit", "animate"].includes(Modes.selected.id),
                 click: togglePreview
@@ -396,10 +398,10 @@
                 activeGroups().concat(activeCubes()).forEach(node => { node.export = false; });
             });
             listen(Blockbench, "create_undo_save", ({save, aspects}) => {
-                if (supported() && aspects.modeling_based_on_steve) save[ID] = clone(state());
+                if (supported() && aspects[STATE_KEY]) save[STATE_KEY] = clone(state());
             });
             listen(Blockbench, "load_undo_save", ({save}) => {
-                if (supported() && save[ID]) Project.unhandled_root_fields[ID] = clone(save[ID]);
+                if (supported() && save[STATE_KEY]) Project.unhandled_root_fields[STATE_KEY] = clone(save[STATE_KEY]);
             });
             refresh();
         },
@@ -414,7 +416,7 @@
             document.querySelectorAll(".outliner_object.mbs_preview").forEach(node => node.classList.remove("mbs_preview"));
             // 项目中的预览节点和暂存资料保留为原生数据，卸载不会丢失用户动画
             ModelProject.all.forEach(project => {
-                const data = project.unhandled_root_fields[ID];
+                const data = project.unhandled_root_fields[STATE_KEY];
                 if (!data) return;
                 project.elements.forEach(element => {
                     Object.values(element.faces || {}).forEach(face => {
