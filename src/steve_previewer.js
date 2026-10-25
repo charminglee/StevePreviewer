@@ -375,7 +375,11 @@
                 condition: () => supported() && ["edit", "animate"].includes(Modes.selected.id),
                 click: togglePreview
             });
-            Toolbars.outliner.add(action);
+            const toolbar = Toolbars.outliner;
+            toolbar.remove(action, false);
+            // 放在弹性占位符前，与左侧已有按钮排列在一起
+            const spacerIndex = toolbar.children.findIndex(item => typeof item === "string" && item.startsWith("+"));
+            toolbar.add(action, spacerIndex === -1 ? toolbar.children.length : spacerIndex);
             css = Blockbench.addCSS(`
                 .outliner_object.mbs_preview { border-left: 2px dashed #58c9df; background-color: #58c9df0b; }
                 .outliner_object.mbs_preview > .icon { color: #58c9df !important; }
