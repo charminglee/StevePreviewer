@@ -140,74 +140,47 @@
         return dialog;
     }
 
-    function checkNames(names, onReady) {
-        const existing = new Set(Group.all.map(group => group.name.toLowerCase()));
-        const conflicts = names.filter(name => existing.has(name.toLowerCase()));
-        if (!conflicts.length) {
-            onReady("");
-            return;
-        }
-        // 同名骨骼不能在 Bedrock 动画中区分，名称变更交由用户选择
-        const project = Project;
-        const dialog = showDialog({
-            id: ID + "_names", title: "Steve 骨骼名称冲突",
-            lines: ["已有同名骨骼：" + conflicts.join(", "), "请选择 Steve 骨骼的统一前缀，现有骨骼不会被改名。"],
-            form: {prefix: {label: "Steve 骨骼前缀", type: "text", value: "steve_"}},
-            buttons: ["使用前缀", "取消"],
-            onConfirm(result) {
-                if (Project !== project) {
-                    this.hide(); this.delete(); dialogs.delete(dialog);
-                    return false;
-                }
-                const prefix = result.prefix;
-                if (!/^[a-zA-Z0-9_]+$/.test(prefix) ||
-                    names.some(name => existing.has((prefix + name).toLowerCase()))) {
-                    Blockbench.showQuickMessage("请输入不产生同名骨骼的字母、数字或下划线前缀");
-                    return false;
-                }
-                this.hide();
-                this.delete();
-                dialogs.delete(dialog);
-                onReady(prefix);
-                return false;
-            },
-            onCancel() {
-                this.hide(); this.delete(); dialogs.delete(dialog);
-                return false;
-            }
-        });
-    }
-
     function snapshot() {
         const groups = activeGroups();
         const cubes = activeCubes();
+        const borrowed = (state().borrowed || []).map(uuid => OutlinerNode.uuids[uuid])
+            .filter(node => node instanceof Group);
         const parents = {};
-        groups.concat(cubes).forEach(node => {
+        groups.concat(borrowed, cubes).forEach(node => {
             parents[node.uuid] = node.parent === "root" ? null : node.parent.uuid;
         });
         return {
             groups: groups.map(group => clone(group.getSaveCopy(false))),
+            borrowed: borrowed.map(group => clone(group.getSaveCopy(false))),
             cubes: cubes.map(cube => cube.getUndoCopy()), parents
         };
     }
 
-    function createSteve(prefix) {
+    function createSteve() {
         const groups = {};
-        const ids = {groups: [], cubes: []};
+        const ids = {groups: [], cubes: [], borrowed: []};
         STEVE.bones.forEach(bone => {
+            const existing = Group.all.find(group => group.name === bone.name);
+            if (existing) {
+                groups[bone.name] = existing;
+                ids.borrowed.push(existing.uuid);
+                return;
+            }
             const origin = bone.pivot.slice();
             origin[0] *= -1;
-            const group = new Group({name: prefix + bone.name, origin, export: false}).init();
+            const group = new Group({name: bone.name, origin, export: false}).init();
             groups[bone.name] = group;
             ids.groups.push(group.uuid);
         });
         // 官方数据不保证父骨骼在前，因此先建立所有骨骼再连接层级
         STEVE.bones.forEach(bone => {
             const group = groups[bone.name];
-            group.addTo(bone.parent ? groups[bone.parent] : "root");
+            // 原有骨骼只接收预览块，不改动其父级、枢轴、旋转或导出设置
+            if (ids.groups.includes(group.uuid)) group.addTo(bone.parent ? groups[bone.parent] : "root");
             (bone.cubes || []).forEach(data => {
                 const cube = Codecs.bedrock.parseCube(data, group, bone);
-                cube.name = prefix + bone.name + "_preview";
+                cube.name = bone.name + "_preview";
+                cube.mirror_uv = data.mirror === true;
                 cube.export = false;
                 ids.cubes.push(cube.uuid);
             });
@@ -215,39 +188,56 @@
         Project.unhandled_root_fields[STATE_KEY] = ids;
     }
 
-    function restoreSteve(cache, prefix) {
-        const all = cache.groups.concat(cache.cubes);
-        if (all.some(data => OutlinerNode.uuids[data.uuid])) {
-            throw new Error("暂存的 Steve UUID 与当前对象冲突，请先撤销相关合并操作。");
+    function restoreSteve(cache) {
+        if (cache.cubes.some(data => OutlinerNode.uuids[data.uuid])) {
+            throw new Error("暂存的 Steve 预览块 UUID 与当前对象冲突，请先撤销相关合并操作。");
         }
-        cache.groups.forEach(data => {
-            new Group(Object.assign({}, data, {name: prefix + data.name}), data.uuid).init();
+        const groupData = cache.groups.concat(cache.borrowed || []);
+        const groups = new Map();
+        const ids = {groups: [], cubes: cache.cubes.map(data => data.uuid), borrowed: []};
+        groupData.forEach(data => {
+            const saved = OutlinerNode.uuids[data.uuid];
+            const existing = saved instanceof Group ? saved : Group.all.find(group => group.name === data.name);
+            if (existing) {
+                groups.set(data.uuid, existing);
+                ids.borrowed.push(existing.uuid);
+                return;
+            }
+            if (saved) throw new Error("暂存的 Steve 骨骼 UUID 与当前对象冲突，请先撤销相关合并操作。");
+            const group = new Group(Object.assign({}, data, {export: false}), data.uuid).init();
+            groups.set(data.uuid, group);
+            ids.groups.push(group.uuid);
         });
-        cache.cubes.forEach(data => OutlinerElement.fromSave(clone(data), true));
-        all.forEach(data => {
-            const parent = OutlinerNode.uuids[cache.parents[data.uuid]];
-            OutlinerNode.uuids[data.uuid].addTo(parent instanceof Group ? parent : "root");
+        groupData.forEach(data => {
+            const group = groups.get(data.uuid);
+            if (!ids.groups.includes(group.uuid)) return;
+            const parentId = cache.parents[data.uuid];
+            const parent = groups.get(parentId) || OutlinerNode.uuids[parentId];
+            group.addTo(parent instanceof Group ? parent : "root");
         });
-        Project.unhandled_root_fields[STATE_KEY] = {
-            groups: cache.groups.map(data => data.uuid), cubes: cache.cubes.map(data => data.uuid)
-        };
+        cache.cubes.forEach(data => {
+            const cube = OutlinerElement.fromSave(clone(data), true);
+            const parentId = cache.parents[data.uuid];
+            const parent = groups.get(parentId) || OutlinerNode.uuids[parentId];
+            cube.addTo(parent instanceof Group ? parent : "root");
+        });
+        Project.unhandled_root_fields[STATE_KEY] = ids;
         // UUID 不变即可重新接上暂存前的动画；同步名称供关闭状态下的导出使用
         Animation.all.forEach(animation => {
-            cache.groups.forEach(data => {
+            groupData.forEach(data => {
                 const animator = animation.animators[data.uuid];
-                if (animator) animator.name = prefix + data.name;
+                if (animator) animator.name = groups.get(data.uuid).name;
             });
         });
     }
 
     function enablePreview() {
         const cache = state().cache;
-        const names = cache ? cache.groups.map(data => data.name) : STEVE.bones.map(bone => bone.name);
-        checkNames(names, prefix => transaction("开启 Steve 预览", () => {
+        transaction("开启 Steve 预览", () => {
             getSkin();
-            if (cache) restoreSteve(cache, prefix);
-            else createSteve(prefix);
-        }));
+            if (cache) restoreSteve(cache);
+            else createSteve();
+        });
     }
 
     function disablePreview(moveAttachments) {
