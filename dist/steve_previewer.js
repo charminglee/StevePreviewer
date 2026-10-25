@@ -374,7 +374,7 @@
                 condition: () => supported() && ["edit", "animate"].includes(Modes.selected.id),
                 click: togglePreview
             });
-            Toolbars.main_tools.add(action);
+            Toolbars.outliner.add(action);
             css = Blockbench.addCSS(`
                 .outliner_object.mbs_preview { border-left: 2px dashed #58c9df; background-color: #58c9df0b; }
                 .outliner_object.mbs_preview > .icon { color: #58c9df !important; }
