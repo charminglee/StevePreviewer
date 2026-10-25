@@ -12,6 +12,8 @@
 
 交付的 JS 内已包含模型数据和 PNG 贴图，不需要联网，也不需要将 `assets/` 复制到 Blockbench。`src/` 中的是构建模板，安装时请选择 `dist/` 中的文件。
 
+插件管理器的“关于”页提供简短功能说明，内容来自 [`about.md`](about.md)，构建时一并内嵌到交付 JS。当前已实现基岩原版 Steve 预览，描述中提到的网易版 4D 标准模型预览尚未实现。
+
 ## 使用
 
 - **开启预览**：将 Mojang 官方玩家骨架及方块加入当前工程，包含 17 个骨骼、12 个方块和 64×64 Steve 皮肤。骨骼可直接选中和制作动画，自己的模型可挂到这些骨骼下。
@@ -41,10 +43,11 @@
 | 路径 | 用途 |
 | --- | --- |
 | `src/steve_previewer.js` | 插件逻辑及内置资源占位符 |
+| `about.md` | 插件管理器中显示的简短关于页 |
 | `assets/steve.geo.json` | Mojang 原始玩家几何与骨架 |
 | `assets/steve.png` | Mojang 原始 Steve 皮肤 |
 | `assets/Mojang-LICENSE.md` | 原资源附带的使用条款 |
-| `build.ps1` | 将几何和 PNG 内嵌到单文件插件 |
+| `build.ps1` | 将几何、PNG 和关于页内嵌到单文件插件 |
 | `dist/steve_previewer.js` | 可加载的插件交付文件 |
 
 在此目录使用 PowerShell 7 构建：

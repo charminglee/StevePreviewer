@@ -364,7 +364,8 @@
 
     Plugin.register(ID, {
         title: "StevePreviewer", author: "Nuoyan", version: "1.0.0",
-        description: "基岩版实体建模与动画使用的原版 Steve 开发预览，独立贴图，几何不导出。",
+        description: "使用基岩原版Steve实体模型或网易版4D标准模型作为开发预览。",
+        about: /* @embedded-about */ "",
         icon: "accessibility_new", variant: "desktop", min_version: "5.2.2",
         tags: ["Minecraft: Bedrock Edition", "Utility"],
         onload() {

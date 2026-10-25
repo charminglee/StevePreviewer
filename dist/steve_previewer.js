@@ -364,7 +364,8 @@
 
     Plugin.register(ID, {
         title: "StevePreviewer", author: "Nuoyan", version: "1.0.0",
-        description: "基岩版实体建模与动画使用的原版 Steve 开发预览，独立贴图，几何不导出。",
+        description: "使用基岩原版Steve实体模型或网易版4D标准模型作为开发预览。",
+        about: "# StevePreviewer\n\n作者：**Nuoyan**\n\n为基岩版实体建模和动画制作提供玩家模型参考。\n\n- 点击 **OUTLINER 下方工具栏**的人形按钮，开启或关闭模型预览。\n- 预览模型的骨骼和方块直接加入当前工程，可挂载自建模型并制作动画。\n- 使用内置贴图和独立 UV，骨骼树中的预览节点带有专属标记。\n- 导出基岩版模型时排除预览方块，骨骼动画正常导出；自建模型所需的父骨骼会保留。\n- 关闭预览时保留 Steve 动画轨道；若有自建挂载内容，可选择“移至顶层”或“删除”。\n\n当前版本已内置基岩原版 Steve 模型，网易版 4D 标准模型预览尚未实现。\n\n适用于 **Blockbench 桌面版 5.2.2 及以上版本**的 **Bedrock Entity / 基岩版实体模型**工程。\n",
         icon: "accessibility_new", variant: "desktop", min_version: "5.2.2",
         tags: ["Minecraft: Bedrock Edition", "Utility"],
         onload() {
